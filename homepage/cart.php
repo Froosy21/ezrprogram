@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'description' => 'Order Payment for ' . $email,
                     'statement_descriptor' => 'EZReborn',
                     'redirect' => [
-                        'success' => 'payments/payment_success.php',
+                        'success' => 'home.php',
                         'failed' => 'payments/payment_failed.php'
                     ]
                 ]
@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: right;
             margin-top: 20px;
         }
-                .hamburger-menu {
+        .hamburger-menu {
             position: relative;
             display: inline-block;
         }

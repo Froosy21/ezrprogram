@@ -11,7 +11,7 @@ if ($result->num_rows > 0) {
         $products[$row['id']] = [
             'name' => $row['name'],
             'price' => $row['price'],
-            'stock' => $row['quantity'],
+            'stock' => $row['quantity'],  
             'image' => '../admin/' . $row['imagePath'],
             'discount' => $row['discount']
         ];
@@ -28,20 +28,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     $product_id = (int)$_POST['product_id'];
     $quantity = (int)$_POST['quantity'];
 
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
+    // Fetch current stock from the database
+    $stmt = $conn->prepare("SELECT quantity FROM product WHERE id = ?");
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $stmt->bind_result($stock);
+    $stmt->fetch();
+    $stmt->close();
 
-    if (isset($_SESSION['cart'][$product_id])) {
-        $_SESSION['cart'][$product_id] += $quantity;
+    if ($quantity > $stock) {
+        $message = "Error: Not enough stock available.";
     } else {
-        $_SESSION['cart'][$product_id] = $quantity;
-    }
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
 
-    header('Location: shop.php');
-    exit();
+        if (isset($_SESSION['cart'][$product_id])) {
+            $_SESSION['cart'][$product_id] += $quantity;
+        } else {
+            $_SESSION['cart'][$product_id] = $quantity;
+        }
+
+        $new_stock = max(0, $stock - $quantity);
+        $stmt = $conn->prepare("UPDATE product SET quantity = ? WHERE id = ?");
+        $stmt->bind_param("ii", $new_stock, $product_id);
+        $stmt->execute();
+        $stmt->close();
+
+        header('Location: shop.php');
+        exit();
+    }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,6 +162,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             padding: 10px;
             margin-bottom: 20px; /* Moved margin closer to the product grid */
         }
+
+        .sold-out {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -173,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
     <main>
         <div class="shop-container">
-            <!-- Search bar moved to the top -->
+            <!-- Search bar -->
             <form class="search-bar" action="shop.php" method="get">
                 <input type="text" name="search" placeholder="Search for products..." value="<?php echo htmlspecialchars($search_query); ?>">
                 <button type="submit">Search</button>
@@ -184,18 +208,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     <p>No products found.</p>
                 <?php else : ?>
                     <?php foreach ($filtered_products as $product_id => $product) : ?>
-                        <a href="product.php?id=<?php echo $product_id; ?>">
-                            <div class="product-card">
+                        <div class="product-card">
+                            <a href="product.php?id=<?php echo $product_id; ?>">
                                 <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                                 <h3><?php echo htmlspecialchars($product['name']); ?></h3>
+                            </a>
+
+                            <!-- Display stock status -->
+                            <?php if ($product['stock'] == 0): ?>
+                                <p class="sold-out" style="color:red; font-weight: bold;">SOLD OUT</p>
+                            <?php else: ?>
+                                <p>In Stock: <?php echo $product['stock']; ?></p>
                                 <p>₱<?php echo number_format($product['price'], 2); ?></p>
-                                <form action="shop.php" method="post">
-                                    <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
-                                    <input type="number" name="quantity" value="1" min="1" max="10">
+                            <?php endif; ?>
+
+                            <!-- Add to Cart form -->
+                            <form action="shop.php" method="post">
+                                <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
+                                <?php if ($product['stock'] > 0): ?>
+                                    <!-- Max value is set to available stock -->
+                                    <input type="number" name="quantity" value="1" min="1" max="<?php echo $product['stock']; ?>">
                                     <button type="submit" name="add_to_cart">Add to Cart</button>
-                                </form>
-                            </div>
-                        </a>
+                                <?php else: ?>
+                                    <button type="button" disabled>Sold Out</button>
+                                <?php endif; ?>
+                            </form>
+                        </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </section>
@@ -203,7 +241,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     </main>
 
     <script>
-        // Hamburger menu toggle
         const hamburgerMenu = document.querySelector('.hamburger-menu');
         const hamburgerIcon = document.querySelector('.hamburger-icon');
         const dropdownMenu = document.querySelector('.dropdown-menu');
