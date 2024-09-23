@@ -50,36 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     <title>Shop - EZReborn</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .shop-container {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        .product-grid {
-            width: 80%;
-            display: flex;
-            flex-wrap: wrap;
-            padding: 10px;
-        }
-        .product-card {
-            width: 30%;
-            margin: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .product-card img {
-            width: 100%;
-            height: auto;
-        }
-        .product-card h3, .product-card p {
-            text-align: center;
-        }
-        .search-bar {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-
         .hamburger-menu {
             position: relative;
             display: inline-block;
@@ -123,6 +93,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         .hamburger-menu.active .dropdown-menu {
             display: block;
         }
+
+        .shop-container {
+            width: 100%;
+            max-width: 1200px; /* Restrict width for a centered layout */
+            margin: 0 auto; /* Center the grid */
+            padding: 20px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Automatically adjust column count */
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            background-color: white;
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .product-card img {
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover; /* Ensures all images are the same size */
+            margin-bottom: 10px;
+        }
+
+        .product-card h3 {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        .product-card p {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .product-card:hover {
+            transform: scale(1.05);
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px; /* Moved margin closer to the product grid */
+        }
     </style>
 </head>
 <body>
@@ -136,7 +156,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <li><a href="calendar.php">Events</a></li>
                 <li><a href="about.php">About Us</a></li>
                 <li><a href="cart.php">Cart</a></li>
-                <li><a href="../LogReg/logout.php">Log Out</a></li>
             </ul>
         </nav>
         <!-- Hamburger menu -->
@@ -154,11 +173,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
     <main>
         <div class="shop-container">
+            <!-- Search bar moved to the top -->
+            <form class="search-bar" action="shop.php" method="get">
+                <input type="text" name="search" placeholder="Search for products..." value="<?php echo htmlspecialchars($search_query); ?>">
+                <button type="submit">Search</button>
+            </form>
+
             <section class="product-grid">
-                <form class="search-bar" action="shop.php" method="get">
-                    <input type="text" name="search" placeholder="Search for products..." value="<?php echo htmlspecialchars($search_query); ?>">
-                    <button type="submit">Search</button>
-                </form>
                 <?php if (empty($filtered_products)) : ?>
                     <p>No products found.</p>
                 <?php else : ?>
@@ -180,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             </section>
         </div>
     </main>
+
     <script>
         // Hamburger menu toggle
         const hamburgerMenu = document.querySelector('.hamburger-menu');

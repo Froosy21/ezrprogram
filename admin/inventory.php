@@ -2,10 +2,11 @@
 session_start();
 include('../LogReg/database.php');
 
+// Fetch available products
 $inventory_sql = "SELECT id, name, price, quantity FROM product WHERE quantity > 0";
 $result = $conn->query($inventory_sql);
-$products = [];
 
+$products = [];
 if ($result) {
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
@@ -16,6 +17,18 @@ if ($result) {
     }
 } else {
     $message = "Error fetching products: " . $conn->error;
+}
+
+// After successful payment, update the quantity in the database
+if (isset($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $product_id => $quantity) {
+        $update_quantity_sql = "UPDATE product SET quantity = quantity - ? WHERE id = ?";
+        $stmt = $conn->prepare($update_quantity_sql);
+        $stmt->bind_param("ii", $quantity, $product_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+    unset($_SESSION['cart']);  // Clear the cart after updating inventory
 }
 
 $conn->close();

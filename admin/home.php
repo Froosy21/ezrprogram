@@ -13,6 +13,7 @@
       <li><a href="javascript:void(0)" onclick="loadPage('admin_events')">Events</a></li>
       <li><a href="javascript:void(0)" onclick="loadPage('products')">Products</a></li>
       <li><a href="javascript:void(0)" onclick="loadPage('inventory')">Inventory</a></li>
+      <li><a href="javascript:void(0)" onclick="loadPage('admin_reg')">Event Registration</a></li>
     </ul>
   </nav>
   <div id="content"></div>

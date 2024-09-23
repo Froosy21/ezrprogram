@@ -1,23 +1,50 @@
 <?php
 session_start();
-include('../LogReg/database.php'); 
+include('../LogReg/database.php');
 
+// Get the current month and year from the URL or set defaults
+$current_month = isset($_GET['month']) ? intval($_GET['month']) : date('m');
+$current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
-$query = "SELECT * FROM esports_events ORDER BY event_date";
+// Adjust month and year for navigation
+if (isset($_GET['action'])) {
+    if ($_GET['action'] == 'prev') {
+        if ($current_month == 1) {
+            $current_month = 12;
+            $current_year--;
+        } else {
+            $current_month--;
+        }
+    } elseif ($_GET['action'] == 'next') {
+        if ($current_month == 12) {
+            $current_month = 1;
+            $current_year++;
+        } else {
+            $current_month++;
+        }
+    }
+}
+
+// Fetch events from the database for the selected month and year
+$query = "SELECT * FROM esports_events WHERE MONTH(event_date) = $current_month AND YEAR(event_date) = $current_year ORDER BY event_date";
 $result = mysqli_query($conn, $query);
-
 
 $events_by_date = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $date = $row['event_date'];
+    $date = date('Y-m-d', strtotime($row['event_date'])); // Ensure correct date format
     $events_by_date[$date][] = [
+        'id' => $row['id'],
         'title' => $row['event_title'],
         'description' => $row['event_description'],
         'hover_text' => $row['hover_text'],
         'image_url' => $row['image_url'],
-        'form_url' => $row['form_url'] 
     ];
 }
+
+// Set the number of days in the current month
+$days_in_month = cal_days_in_month(CAL_GREGORIAN, $current_month, $current_year);
+$first_day_of_month = strtotime("$current_year-$current_month-01");
+$day_of_week = date('w', $first_day_of_month);
 ?>
 
 <!DOCTYPE html>
@@ -28,33 +55,20 @@ while ($row = mysqli_fetch_assoc($result)) {
     <title>Event Calendar</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        #content {
-            margin-left: 10px; /*para magpa left sa sidebar*/
-            padding: 15px;
-            width: calc(100% - 260px); /* Adjust width para hindi mag overlap sa sidebar */
-            background-size: cover;
-            background-position: center;
-            color: black;
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin: 20px;
         }
-        table {
-            width: 80%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: rgba(255, 255, 255, 0.8);
-        }
-        table th, table td {
+        .day {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        table th {
-            background-color: #f4f4f4;
+            padding: 10px;
+            min-height: 100px;
+            position: relative;
         }
         .event-cell {
             position: relative;
-            display: inline-block;
-            margin-right: 10px;
-            padding: 5px;
         }
         .hover-content {
             display: none;
@@ -64,6 +78,8 @@ while ($row = mysqli_fetch_assoc($result)) {
             padding: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 1000;
+            left: 0;
+            top: 100%;
         }
         .event-cell:hover .hover-content {
             display: block;
@@ -86,98 +102,25 @@ while ($row = mysqli_fetch_assoc($result)) {
         .hover-content a:hover {
             background-color: #0056b3;
         }
-                        /* Hamburger Menu */
-                .hamburger-menu {
-            position: relative;
-            display: inline-block;
+        #navigation {
+            text-align: center;
+            margin-bottom: 20px;
         }
-
-        .hamburger-icon {
-            font-size: 24px;
+        #navigation button {
+            margin: 0 10px;
+            padding: 10px 15px;
+            background-color: #aa1345;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
-
-        .dropdown-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .dropdown-menu ul li {
-            padding: 10px 20px;
-        }
-
-        .dropdown-menu ul li a {
-            text-decoration: none;
-            color: black;
-            display: block;
-        }
-
-        .dropdown-menu ul li:hover {
-            background-color: #f1f1f1;
-        }
-
-        /* Show dropdown when active */
-        .hamburger-menu.active .dropdown-menu {
-            display: block;
-        }
-        /* Hamburger Menu */
-        .hamburger-menu {
-            position: relative;
-            display: inline-block;
-        }
-
-        .hamburger-icon {
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
-
-        .dropdown-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .dropdown-menu ul li {
-            padding: 10px 20px;
-        }
-
-        .dropdown-menu ul li a {
-            text-decoration: none;
-            color: black;
-            display: block;
-        }
-
-        .dropdown-menu ul li:hover {
-            background-color: #f1f1f1;
-        }
-
-        /* Show dropdown when active */
-        .hamburger-menu.active .dropdown-menu {
-            display: block;
+        #navigation span {
+            font-size: 1.2em;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar Navigation -->
     <header>
         <img src="img/EzR Logo.png" alt="Logo" class="logo">
         <h1>EZ reborn gears</h1>
@@ -190,65 +133,54 @@ while ($row = mysqli_fetch_assoc($result)) {
                 <li><a href="cart.php">Cart</a></li>
             </ul>
         </nav>
-        <!-- Hamburger menu -->
-        <div class="hamburger-menu">
-            <div class="hamburger-icon">&#9776;</div>
-            <div class="dropdown-menu">
-                <ul>
-                    <li><a href="profile.php">Profile</a></li>
-                    <li><a href="user_orders.php">Your Orders</a></li>
-                    <li><a href="../LogReg/logout.php">Log Out</a></li>
-                </ul>
-            </div>
-        </div>
     </header>
 
-    </main>
-    <script>
-    // Hamburger menu toggle
-        const hamburgerMenu = document.querySelector('.hamburger-menu');
-        const hamburgerIcon = document.querySelector('.hamburger-icon');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
-
-        hamburgerIcon.addEventListener('click', () => {
-            hamburgerMenu.classList.toggle('active');
-        });
-    </script>
-
     <div id="content">
-        <h1>Upcoming Events</h1>
+        <h1>Event Calendar</h1>
+        <div id="navigation">
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="month" value="<?php echo $current_month; ?>">
+                <input type="hidden" name="year" value="<?php echo $current_year; ?>">
+                <button type="submit" name="action" value="prev">&lt; Previous</button>
+            </form>
+            <span><?php echo date('F Y', strtotime("$current_year-$current_month-01")); ?></span>
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="month" value="<?php echo $current_month; ?>">
+                <input type="hidden" name="year" value="<?php echo $current_year; ?>">
+                <button type="submit" name="action" value="next">Next &gt;</button>
+            </form>
+        </div>
+        <div id="calendar">
+            <?php
+            // Print empty cells for days before the first of the month
+            for ($i = 0; $i < $day_of_week; $i++) {
+                echo '<div class="day"></div>';
+            }
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Events</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($events_by_date as $date => $events): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($date); ?></td>
-                    <td>
-                        <?php foreach ($events as $event): ?>
-                        <div class="event-cell">
-                            <strong><?php echo htmlspecialchars($event['title']); ?></strong>
-                            <div class="hover-content">
-                                <?php if ($event['image_url']): ?>
-                                <img src="<?php echo htmlspecialchars($event['image_url']); ?>" alt="Event Image">
-                                <?php endif; ?>
-                                <p><?php echo htmlspecialchars($event['hover_text']); ?></p>
-                                <?php if ($event['form_url']): ?>
-                                <a href="<?php echo htmlspecialchars($event['form_url']); ?>" target="_blank">Sign Up</a> <!-- Form URL link -->
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+            // Print days of the month
+            for ($day = 1; $day <= $days_in_month; $day++) {
+                $date = sprintf('%04d-%02d-%02d', $current_year, $current_month, $day);
+                echo '<div class="day">';
+                echo "<strong>$day</strong><br>";
+
+                // Display events for that day
+                if (isset($events_by_date[$date])) {
+                    foreach ($events_by_date[$date] as $event) {
+                        echo '<div class="event-cell">';
+                        echo htmlspecialchars($event['title']);
+                        echo '<div class="hover-content">';
+                        if ($event['image_url']) {
+                            echo '<img src="' . htmlspecialchars($event['image_url']) . '" alt="Event Image">';
+                        }
+                        echo '<p>' . htmlspecialchars($event['hover_text']) . '</p>';
+                        echo '<a href="eventreg.php?event_id=' . urlencode($event['id']) . '">Sign Up</a>';
+                        echo '</div></div>';
+                    }
+                }
+                echo '</div>';
+            }
+            ?>
+        </div>
     </div>
 </body>
 </html>

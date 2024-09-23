@@ -2,7 +2,7 @@
 session_start();
 include('../LogReg/database.php');
 
-// Fetch products and cart details
+// Fetch products
 $sql = "SELECT id, name, price, quantity, imagePath FROM product";
 $result = $conn->query($sql);
 
@@ -27,11 +27,13 @@ foreach ($cart as $product_id => $quantity) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['pay'])) {
         $email = $_SESSION['email'];
-        $amount = $total * 100;  // Convert to centavos
+        $amount = $total * 100;  // Amount in cents for PayMongo
 
+        // Initialize cURL for PayMongo API
         $curl = curl_init();
-        $paymongo_api_key = 'sk_test_Rq5WQbJcwvAnu4ewEgurmSfz'; // Use your API key
+        $paymongo_api_key = 'sk_test_Rq5WQbJcwvAnu4ewEgurmSfz';
 
+        // Prepare data for PayMongo Link API
         $data = [
             'data' => [
                 'attributes' => [
@@ -40,13 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'description' => 'Order Payment for ' . $email,
                     'statement_descriptor' => 'EZReborn',
                     'redirect' => [
-                        'success' => 'http://yourdomain.com/success',
-                        'failed' => 'http://yourdomain.com/failed'
+                        'success' => 'payments/payment_success.php',
+                        'failed' => 'payments/payment_failed.php'
                     ]
                 ]
             ]
         ];
 
+        // Set up cURL options
         curl_setopt_array($curl, [
             CURLOPT_URL => "https://api.paymongo.com/v1/links",
             CURLOPT_RETURNTRANSFER => true,
@@ -58,18 +61,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]
         ]);
 
+        // Execute cURL request
         $response = curl_exec($curl);
         $err = curl_error($curl);
         curl_close($curl);
 
+        // Error handling
         if ($err) {
             echo "cURL Error #:" . $err;
         } else {
             $response_data = json_decode($response, true);
             $payment_url = $response_data['data']['attributes']['checkout_url'];
 
-            // Redirect to payment.php with the generated URL
+            // Store the payment link in the session
             $_SESSION['payment_url'] = $payment_url;
+
+            // Store order details in the orders table
+            foreach ($cart as $product_id => $quantity) {
+                $stmt = $conn->prepare("INSERT INTO orders (email, product_name, quantity, price, order_date) VALUES (?, ?, ?, ?, NOW())");
+                $stmt->bind_param("ssii", $email, $products[$product_id]['name'], $quantity, $products[$product_id]['price']);
+                $stmt->execute();
+                $stmt->close();
+            }
+
+            // Redirect to payment page
             header('Location: payment.php');
             exit();
         }
@@ -102,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: right;
             margin-top: 20px;
         }
-                /* Hamburger Menu */
                 .hamburger-menu {
             position: relative;
             display: inline-block;
@@ -142,7 +156,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #f1f1f1;
         }
 
-        /* Show dropdown when active */
         .hamburger-menu.active .dropdown-menu {
             display: block;
         }
@@ -161,7 +174,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <li><a href="cart.php">Cart</a></li>
             </ul>
         </nav>
-        <!-- Hamburger menu -->
         <div class="hamburger-menu">
             <div class="hamburger-icon">&#9776;</div>
             <div class="dropdown-menu">
@@ -204,7 +216,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
     </main>
     <script>
-    // Hamburger menu toggle
         const hamburgerMenu = document.querySelector('.hamburger-menu');
         const hamburgerIcon = document.querySelector('.hamburger-icon');
         const dropdownMenu = document.querySelector('.dropdown-menu');

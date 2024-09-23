@@ -1,43 +1,26 @@
-<?php
+<?php 
 session_start();
 include('../LogReg/database.php'); // Include your database connection
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add_event'])) {
-        // Capture form input
-        $event_date = $_POST['event_date'];
-        $event_title = $_POST['event_title'];
-        $event_description = $_POST['event_description'];
-        $hover_text = $_POST['hover_text'];
-        $image_url = $_POST['image_url'];
-        $form_url = $_POST['form_url'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
+    // Capture form input
+    $event_date = $_POST['event_date'];
+    $event_title = $_POST['event_title'];
+    $event_description = $_POST['event_description'];
+    $hover_text = $_POST['hover_text'];
+    $image_url = $_POST['image_url'];
 
-        // Prepare and bind the SQL query
-        $stmt = $conn->prepare("INSERT INTO esports_events (event_date, event_title, event_description, hover_text, image_url, form_url) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssss", $event_date, $event_title, $event_description, $hover_text, $image_url, $form_url);
+    // Prepare and bind the SQL query
+    $stmt = $conn->prepare("INSERT INTO esports_events (event_date, event_title, event_description, hover_text, image_url) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssss", $event_date, $event_title, $event_description, $hover_text, $image_url);
 
-        // Execute the query and check for success
-        if ($stmt->execute()) {
-            echo "Event added successfully!";
-        } else {
-            echo "Error: " . $stmt->error;
-        }
-        $stmt->close();
-    } elseif (isset($_POST['delete_event'])) {
-        $event_id = $_POST['event_id'];
-
-        // Prepare and bind the SQL query for deletion
-        $stmt = $conn->prepare("DELETE FROM esports_events WHERE id = ?");
-        $stmt->bind_param("i", $event_id);
-
-        // Execute the query and check for success
-        if ($stmt->execute()) {
-            echo "Event deleted successfully!";
-        } else {
-            echo "Error: " . $stmt->error;
-        }
-        $stmt->close();
+    // Execute the query and check for success
+    if ($stmt->execute()) {
+        echo "Event added successfully!";
+    } else {
+        echo "Error: " . $stmt->error;
     }
+    $stmt->close();
 }
 
 // Fetch existing events
@@ -62,6 +45,7 @@ $result = mysqli_query($conn, $query);
             <li><a href="javascript:void(0)" onclick="loadPage('admin_events')">Events</a></li>
             <li><a href="javascript:void(0)" onclick="loadPage('products')">Products</a></li>
             <li><a href="javascript:void(0)" onclick="loadPage('inventory')">Inventory</a></li>
+            <li><a href="javascript:void(0)" onclick="loadPage('admin_reg')">Event Registration</a></li>
         </ul>
     </nav>
 
@@ -95,11 +79,6 @@ $result = mysqli_query($conn, $query);
                 <input type="text" name="image_url">
             </div>
 
-            <div class="form-group">
-                <label for="form_url">Form URL:</label>
-                <input type="text" name="form_url" required>
-            </div>
-
             <button type="submit" name="add_event">Add Event</button>
         </form>
 
@@ -110,19 +89,12 @@ $result = mysqli_query($conn, $query);
                 <th>Date</th>
                 <th>Title</th>
                 <th>Description</th>
-                <th>Action</th>
             </tr>
             <?php while ($row = mysqli_fetch_assoc($result)): ?>
             <tr>
                 <td><?php echo htmlspecialchars($row['event_date']); ?></td>
                 <td><?php echo htmlspecialchars($row['event_title']); ?></td>
                 <td><?php echo htmlspecialchars($row['event_description']); ?></td>
-                <td>
-                    <form method="POST">
-                        <input type="hidden" name="event_id" value="<?php echo htmlspecialchars($row['id']); ?>">
-                        <button type="submit" name="delete_event">Delete</button>
-                    </form>
-                </td>
             </tr>
             <?php endwhile; ?>
         </table>

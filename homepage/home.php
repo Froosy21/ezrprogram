@@ -1,6 +1,3 @@
-<?php
-session_start();
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,6 +65,24 @@ session_start();
             display: block;
         }
 
+        /* Shop Now button styles */
+        .shop-now-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #ff5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .shop-now-btn:hover {
+            background-color: #ff451a;
+        }
     </style>
 </head>
 <body>
@@ -108,22 +123,23 @@ session_start();
                     <img src="img/product1.jpg" alt="Product 1">
                     <h3>Product 1</h3>
                     <p>Php200.99</p>
-                    <button>Add to Cart</button>
+                    <!-- Shop Now button -->
+                    <a href="shop.php" class="shop-now-btn">Shop Now</a>
                 </div>
             </div>
         </section>
 
         <section class="news">
-            <h2>E-Sports News</h2>
+            <h2>News</h2>
             <div class="slider">
                 <div class="slides">
                     <div class="slide">
-                        <h3>Latest Tournament Results</h3>
-                        <p>EZR 1-0 NXP</p>
+                        <h3>Latest events</h3>
+                        <p>Visit our events page for more info.</p>
                     </div>
                     <div class="slide">
-                        <h3>New Honor Of Kings Tournament</h3>
-                        <p>Sign up for HOK in our e-sports event</p>
+                        <h3>New Gears Available</h3>
+                        <p>Visit our shop page</p>
                     </div>
                 </div>
             </div>
