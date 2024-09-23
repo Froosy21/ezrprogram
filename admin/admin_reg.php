@@ -1,66 +1,30 @@
-<?php
+<?php  
 session_start();
 include('../LogReg/database.php');
 
-// Check if event_id is provided
-if (isset($_GET['event_id'])) {
-    $event_id = intval($_GET['event_id']);
+// Fetch registrations with event details including contact info and social media
+$query = "SELECT r.*, e.event_title, e.event_date 
+          FROM event_registrations r 
+          JOIN esports_events e 
+          ON r.event_id = e.id 
+          ORDER BY e.event_date, r.first_name"; // Updated to use 'first_name' instead of 'user_name'
+$result = mysqli_query($conn, $query);
 
-    // Fetch event details
-    $stmt = $conn->prepare("SELECT * FROM esports_events WHERE id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $event_id);
-        $stmt->execute();
-        $event_result = $stmt->get_result();
-        $event = $event_result->fetch_assoc();
-        $stmt->close();
+// Initialize array to organize events and users
+$events = [];
 
-        // Check if the event exists
-        if (!$event) {
-            echo "Event not found.";
-            exit();
-        }
-    } else {
-        echo "SQL Error: " . $conn->error;
-        exit();
-    }
-} else {
-    // Redirect if no event_id
-    header('Location: calendar.php');
-    exit();
-}
-
-// Handle registration form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
-    $user_email = trim($_POST['user_email']);
-    $contact_no = trim($_POST['contact_no']);
-    $social_media = trim($_POST['social_media']);
-
-    // Validate email format
-    if (!filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
-        echo "Invalid email format.";
-        exit();
-    }
-
-    // Prepare and execute the registration
-    $stmt = $conn->prepare("INSERT INTO event_registrations (event_id, first_name, last_name, user_email, contact_no, social_media) VALUES (?, ?, ?, ?, ?, ?)");
-    if ($stmt) {
-        $stmt->bind_param("isssss", $event_id, $first_name, $last_name, $user_email, $contact_no, $social_media);
-        if ($stmt->execute()) {
-            $stmt->close();
-            // Redirect to success page
-            header('Location: registration_success.php');
-            exit();
-        } else {
-            echo "SQL Error: " . $stmt->error;
-            exit();
-        }
-    } else {
-        echo "SQL Error: " . $conn->error;
-        exit();
-    }
+// Organize data by event
+while ($row = mysqli_fetch_assoc($result)) {
+    $event_date = date("F j, Y", strtotime($row['event_date'])); // Format event date
+    $events[$row['event_title'] . " (" . $event_date . ")"][] = [
+        'user_id'     => $row['id'], // Assuming 'id' is the user ID column
+        'first_name'  => $row['first_name'],
+        'last_name'   => $row['last_name'],
+        'user_email'  => $row['user_email'],
+        'contact_no'  => $row['contact_no'],
+        'social_media'=> $row['social_media'],
+        'discord_tag' => $row['discord_tag'] // Add Discord tag to user data
+    ];
 }
 ?>
 
@@ -69,27 +33,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register for <?php echo htmlspecialchars($event['event_title']); ?></title>
+    <title>Registered Users</title>
+    <link rel="stylesheet" href="home.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-    <h1>Register for <?php echo htmlspecialchars($event['event_title']); ?></h1>
-    <form method="POST">
-        <label for="first_name">First Name:</label>
-        <input type="text" name="first_name" required>
-        <br>
-        <label for="last_name">Last Name:</label>
-        <input type="text" name="last_name" required>
-        <br>
-        <label for="user_email">Email:</label>
-        <input type="email" name="user_email" required>
-        <br>
-        <label for="contact_no">Contact Number:</label>
-        <input type="text" name="contact_no" required>
-        <br>
-        <label for="social_media">Social Media URL:</label>
-        <input type="url" name="social_media">
-        <br>
-        <button type="submit">Register</button>
-    </form>
+    <nav class="sidebar">
+        <!-- Your existing sidebar -->
+    </nav>
+
+    <div id="content">
+        <h1>Registered Users for Events</h1>
+
+        <?php foreach ($events as $event_title => $users): ?>
+            <h2><?php echo htmlspecialchars($event_title); ?></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Contact No.</th>
+                        <th>Social Media</th>
+                        <th>Discord Tag</th> <!-- New column for Discord tag -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($users as $user): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($user['first_name']); ?></td>
+                            <td><?php echo htmlspecialchars($user['last_name']); ?></td>
+                            <td><?php echo htmlspecialchars($user['user_email']); ?></td>
+                            <td><?php echo htmlspecialchars($user['contact_no']); ?></td>
+                            <td><a href="<?php echo htmlspecialchars($user['social_media']); ?>" target="_blank">Social Media</a></td>
+                            <td><?php echo htmlspecialchars($user['discord_tag']); ?></td> <!-- Display Discord tag -->
+                            <td>
+                                <!-- Remove Data Button -->
+                                <form action="remove_user.php" method="POST" onsubmit="return confirm('Are you sure you want to remove this user?');">
+                                    <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user['user_id']); ?>">
+                                    <button type="submit" class="remove-btn">Remove Data</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endforeach; ?>
+    </div>
+
+    <script>
+        // Your existing script
+    </script>
 </body>
 </html>
