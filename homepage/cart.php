@@ -1,6 +1,13 @@
-<?php
+<?php  
 session_start();
 include('../LogReg/database.php');
+
+// Check if the user is logged in
+if (!isset($_SESSION['email'])) {
+    // Redirect to login page if not logged in
+    header('Location: ../LogReg/login.php'); // Adjust the path to your login page
+    exit();
+}
 
 // Fetch products
 $sql = "SELECT id, name, price, quantity, imagePath FROM product";
@@ -24,7 +31,28 @@ foreach ($cart as $product_id => $quantity) {
     $total += $products[$product_id]['price'] * $quantity;
 }
 
+// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['update_cart'])) {
+        foreach ($_POST['quantities'] as $product_id => $quantity) {
+            $quantity = max(0, (int)$quantity);  // Prevent negative quantities
+            if ($quantity === 0) {
+                unset($_SESSION['cart'][$product_id]); // Remove item if quantity is zero
+            } else {
+                $_SESSION['cart'][$product_id] = $quantity;
+            }
+        }
+        header('Location: cart.php');
+        exit();
+    }
+
+    if (isset($_POST['remove_item'])) {
+        $product_id = $_POST['remove_item'];
+        unset($_SESSION['cart'][$product_id]); // Remove item from cart
+        header('Location: cart.php');
+        exit();
+    }
+
     if (isset($_POST['pay'])) {
         $email = $_SESSION['email'];
         $amount = $total * 100;  // Amount in cents for PayMongo
@@ -117,6 +145,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: right;
             margin-top: 20px;
         }
+        /* Navbar Styles */
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #c21212;
+            padding: 10px 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            padding: 15px 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #ff5733;
+        }
+
+        /* Main Styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #c21212;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        header img.logo {
+            width: 80px;
+            height: auto;
+            vertical-align: middle;
+        }
+
+        header h1 {
+            display: inline;
+            margin: 0;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        /* Hamburger Menu */
         .hamburger-menu {
             position: relative;
             display: inline-block;
@@ -156,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #f1f1f1;
         }
 
+        /* Show dropdown when active */
         .hamburger-menu.active .dropdown-menu {
             display: block;
         }
@@ -163,67 +252,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <header>
-        <img src="img/EzR Logo.png" alt="Logo" class="logo">
-        <h1>EZ reborn gears</h1>
-        <nav>
+    <img src="img/EzR Logo.png" alt="Logo" class="logo">
+    <h1>EZ reborn gears</h1>
+    <nav>
+        <ul>
+            <li><a href="home.php">Home</a></li>
+            <li><a href="shop.php">Shop</a></li>
+            <li><a href="calendar.php">Events</a></li>
+            <li><a href="about.php">About Us</a></li>
+            <li><a href="cart.php">Cart</a></li>
+        </ul>
+    </nav>
+    <div class="hamburger-menu">
+        <div class="hamburger-icon">&#9776;</div>
+        <div class="dropdown-menu">
             <ul>
-                <li><a href="home.php">Home</a></li>
-                <li><a href="shop.php">Shop</a></li>
-                <li><a href="calendar.php">Events</a></li>
-                <li><a href="about.php">About Us</a></li>
-                <li><a href="cart.php">Cart</a></li>
+                <li><a href="profile.php">Profile</a></li>
+                <li><a href="user_orders.php">Your Orders</a></li>
+                <li><a href="../LogReg/logout.php">Log Out</a></li>
             </ul>
-        </nav>
-        <div class="hamburger-menu">
-            <div class="hamburger-icon">&#9776;</div>
-            <div class="dropdown-menu">
-                <ul>
-                    <li><a href="profile.php">Profile</a></li>
-                    <li><a href="user_orders.php">Your Orders</a></li>
-                    <li><a href="../LogReg/logout.php">Log Out</a></li>
-                </ul>
-            </div>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="cart-container">
-        <h2>Your Cart</h2>
-        <form method="post" action="cart.php">
-            <?php if (empty($cart)) : ?>
-                <p>Your cart is empty.</p>
-            <?php else : ?>
-                <?php foreach ($cart as $product_id => $quantity) : ?>
-                    <div class="cart-item">
-                        <img src="<?php echo htmlspecialchars($products[$product_id]['image']); ?>" alt="<?php echo htmlspecialchars($products[$product_id]['name']); ?>">
-                        <span><?php echo htmlspecialchars($products[$product_id]['name']); ?></span>
-                        <span>₱<?php echo number_format($products[$product_id]['price'], 2); ?></span>
-                        <input type="number" name="quantities[<?php echo $product_id; ?>]" value="<?php echo $quantity; ?>" min="0">
-                    </div>
-                <?php endforeach; ?>
-                <div class="cart-total">
-                    Total: ₱<?php echo number_format($total, 2); ?>
+<main class="cart-container">
+    <h2>Your Cart</h2>
+    <form method="post" action="cart.php">
+        <?php if (empty($cart)) : ?>
+            <p>Your cart is empty.</p>
+        <?php else : ?>
+            <?php foreach ($cart as $product_id => $quantity) : ?>
+                <div class="cart-item">
+                    <img src="<?php echo htmlspecialchars($products[$product_id]['image']); ?>" alt="<?php echo htmlspecialchars($products[$product_id]['name']); ?>">
+                    <span><?php echo htmlspecialchars($products[$product_id]['name']); ?></span>
+                    <span>Price: ₱<?php echo number_format($products[$product_id]['price'], 2); ?></span>
+                    <input type="number" name="quantities[<?php echo $product_id; ?>]" value="<?php echo $quantity; ?>" min="0" style="width: 60px;">
+                    <button type="submit" name="remove_item" value="<?php echo $product_id; ?>">Remove</button>
                 </div>
-                <button type="submit" name="update_cart">Update Cart</button>
-            <?php endif; ?>
-        </form>
-
-        <?php if (!empty($cart)) : ?>
-            <div>
-                <form method="post" action="cart.php">
-                    <button type="submit" name="pay">Pay Now</button>
-                </form>
-            </div>
+            <?php endforeach; ?>
+            <div class="cart-total">Total: ₱<?php echo number_format($total, 2); ?></div>
+            <button type="submit" name="update_cart">Update Cart</button>
+            <button type="submit" name="pay">Pay</button>
         <?php endif; ?>
-    </main>
-    <script>
-        const hamburgerMenu = document.querySelector('.hamburger-menu');
-        const hamburgerIcon = document.querySelector('.hamburger-icon');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
+    </form>
+</main>
 
-        hamburgerIcon.addEventListener('click', () => {
-            hamburgerMenu.classList.toggle('active');
-        });
-    </script>
+<script>
+    // Add hamburger menu functionality
+    document.querySelector('.hamburger-icon').addEventListener('click', function () {
+        this.parentElement.classList.toggle('active');
+    });
+</script>
 </body>
 </html>
-<?php $conn->close(); ?>
