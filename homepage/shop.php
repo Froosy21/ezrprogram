@@ -25,6 +25,11 @@ $filtered_products = array_filter($products, function($product) use ($search_que
 });
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
+    if (!isset($_SESSION['email'])) {
+        header('Location: ../LogReg/login.php'); // Redirect unregistered users to login page
+        exit();
+    }
+
     $product_id = (int)$_POST['product_id'];
     $quantity = (int)$_POST['quantity'];
 
@@ -69,6 +74,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     <title>Shop - EZReborn</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Main Styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #c21212;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        header img.logo {
+            width: 80px;
+            height: auto;
+            vertical-align: middle;
+        }
+
+        header h1 {
+            display: inline;
+            margin: 0;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav ul li {
+            padding: 15px 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        nav ul li a:hover {
+            color: #c21212;
+        }
+
+        /* Hamburger Menu */
         .hamburger-menu {
             position: relative;
             display: inline-block;
@@ -77,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         .hamburger-icon {
             font-size: 24px;
             cursor: pointer;
+            color: white;
         }
 
         .dropdown-menu {
@@ -113,16 +170,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             display: block;
         }
 
+        /* Shop Styles */
         .shop-container {
             width: 100%;
-            max-width: 1200px; /* Restrict width for a centered layout */
-            margin: 0 auto; /* Center the grid */
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
         }
 
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Automatically adjust column count */
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             padding: 20px;
         }
@@ -139,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         .product-card img {
             max-width: 100%;
             height: 200px;
-            object-fit: cover; /* Ensures all images are the same size */
+            object-fit: cover;
             margin-bottom: 10px;
         }
 
@@ -160,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         .search-bar {
             width: 100%;
             padding: 10px;
-            margin-bottom: 20px; /* Moved margin closer to the product grid */
+            margin-bottom: 20px;
         }
 
         .sold-out {
@@ -216,19 +274,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
                             <!-- Display stock status -->
                             <?php if ($product['stock'] == 0): ?>
-                                <p class="sold-out" style="color:red; font-weight: bold;">SOLD OUT</p>
+                                <p class="sold-out">SOLD OUT</p>
                             <?php else: ?>
                                 <p>In Stock: <?php echo $product['stock']; ?></p>
                                 <p>₱<?php echo number_format($product['price'], 2); ?></p>
                             <?php endif; ?>
 
-                            <!-- Add to Cart form -->
+                            <!-- Add to Cart form or Login prompt -->
                             <form action="shop.php" method="post">
                                 <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
                                 <?php if ($product['stock'] > 0): ?>
-                                    <!-- Max value is set to available stock -->
                                     <input type="number" name="quantity" value="1" min="1" max="<?php echo $product['stock']; ?>">
-                                    <button type="submit" name="add_to_cart">Add to Cart</button>
+                                    <?php if (isset($_SESSION['email'])): ?>
+                                        <button type="submit" name="add_to_cart">Add to Cart</button>
+                                    <?php else: ?>
+                                        <p><a href="../LogReg/login.php">Login to add to cart</a></p>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <button type="button" disabled>Sold Out</button>
                                 <?php endif; ?>
@@ -251,4 +312,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     </script>
 </body>
 </html>
+
 <?php $conn->close(); ?>
