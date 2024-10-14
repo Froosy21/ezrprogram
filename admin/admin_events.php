@@ -1,29 +1,43 @@
-<?php 
+<?php  
 session_start();
-include('../LogReg/database.php'); // Include your database connection
+include('../LogReg/database.php'); 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_event'])) {
-    // Capture form input
+   
     $event_date = $_POST['event_date'];
     $event_title = $_POST['event_title'];
     $event_description = $_POST['event_description'];
     $hover_text = $_POST['hover_text'];
-    $image_url = $_POST['image_url'];
 
-    // Prepare and bind the SQL query
-    $stmt = $conn->prepare("INSERT INTO esports_events (event_date, event_title, event_description, hover_text, image_url) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $event_date, $event_title, $event_description, $hover_text, $image_url);
+    
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        
+        $target_dir = "../uploads/";
+        $image_name = basename($_FILES['image']['name']);
+        $target_file = $target_dir . $image_name;
 
-    // Execute the query and check for success
-    if ($stmt->execute()) {
-        echo "Event added successfully!";
+       
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            
+            $stmt = $conn->prepare("INSERT INTO esports_events (event_date, event_title, event_description, hover_text, image_url) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $event_date, $event_title, $event_description, $hover_text, $target_file);
+
+            
+            if ($stmt->execute()) {
+                echo "Event added successfully!";
+            } else {
+                echo "Error: " . $stmt->error;
+            }
+            $stmt->close();
+        } else {
+            echo "Failed to upload image.";
+        }
     } else {
-        echo "Error: " . $stmt->error;
+        echo "Please upload a valid image file.";
     }
-    $stmt->close();
 }
 
-// Fetch existing events
+// Ma baton sang events
 $query = "SELECT * FROM esports_events ORDER BY event_date";
 $result = mysqli_query($conn, $query);
 ?>
@@ -52,8 +66,8 @@ $result = mysqli_query($conn, $query);
     <div id="content">
         <h1>Manage E-Sports Events</h1>
 
-        <!-- Form to Add Event -->
-        <form method="POST" class="event-form">
+        <!-- Form pakadto add event -->
+        <form method="POST" enctype="multipart/form-data" class="event-form">
             <div class="form-group">
                 <label for="event_date">Event Date:</label>
                 <input type="date" name="event_date" required>
@@ -75,14 +89,14 @@ $result = mysqli_query($conn, $query);
             </div>
 
             <div class="form-group">
-                <label for="image_url">Image URL:</label>
-                <input type="text" name="image_url">
+                <label for="image">Upload Image:</label>
+                <input type="file" name="image" accept="image/*" required>
             </div>
 
             <button type="submit" name="add_event">Add Event</button>
         </form>
 
-        <!-- Table to Display Existing Events -->
+        
         <h2>Existing Events</h2>
         <table>
             <tr>
