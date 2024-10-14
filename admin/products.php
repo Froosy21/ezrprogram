@@ -30,6 +30,10 @@
             <input type="number" id="product-description" name="product_description" required>
         </div>
         <div class="form-group">
+            <label for="product-weight">Weight:</label>
+            <input type="number" id="product-weight" name="product_weight" required>
+        </div>
+        <div class="form-group">
             <button type="submit">Add Product</button>
         </div>
     </form>

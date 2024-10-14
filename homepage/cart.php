@@ -2,14 +2,14 @@
 session_start();
 include('../LogReg/database.php');
 
-// Check if the user is logged in
+// Ensure user is logged in
 if (!isset($_SESSION['email'])) {
     header('Location: ../LogReg/login.php');
     exit();
 }
 
-// Fetch products
-$sql = "SELECT id, name, price, quantity, imagePath FROM product";
+// Fetch products from the database
+$sql = "SELECT id, name, price, quantity, weight, imagePath FROM product";
 $result = $conn->query($sql);
 
 $products = [];
@@ -19,16 +19,43 @@ if ($result->num_rows > 0) {
             'name' => $row['name'],
             'price' => $row['price'],
             'quantity' => $row['quantity'],
+            'weight' => $row['weight'],  // Store product weight
             'image' => '../admin/' . $row['imagePath']
         ];
     }
 }
 
+// Initialize cart and calculate total
 $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 $total = 0;
+$total_weight = 0; // Initialize total weight
+
 foreach ($cart as $product_id => $quantity) {
-    $total += $products[$product_id]['price'] * $quantity;
+    $product = $products[$product_id];
+    $total += $product['price'] * $quantity;
+    $total_weight += $product['weight'] * $quantity; // Sum product weights
 }
+
+// J&T Shipping rates based on region
+$shipping_rates = [
+    'Luzon' => [100, 180, 200, 300, 400, 500], // 0-500g, 500g-1kg, ..., 5kg-6kg
+    'Visayas' => [105, 195, 220, 330, 440, 550],
+    'Mindanao' => [115, 205, 230, 340, 450, 560]
+];
+
+// Determine shipping fee based on total weight and region
+function calculateShipping($weight, $region, $rates) {
+    $index = min(ceil($weight / 1000), 6) - 1; // Determine rate index
+    return $rates[$region][$index];
+}
+
+$shipping_fee = 0;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['region'])) {
+    $selected_region = $_POST['region'];
+    $shipping_fee = calculateShipping($total_weight, $selected_region, $shipping_rates);
+}
+
+$grand_total = $total + $shipping_fee; // Final total including shipping
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,15 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['pay'])) {
-        // Get billing address and phone number from the form
         $billing_address = trim($_POST['billing_address']);
         $phone_number = trim($_POST['phone_number']);
         $email = $_SESSION['email'];
-        $amount = $total * 100; // Amount in cents for PayMongo
+        $amount = $grand_total * 100; // For PayMongo
 
-        // Check if the inputs are filled
-        if (empty($billing_address) || empty($phone_number)) {
-            echo "<script>alert('Billing address and phone number are required!');</script>";
+        if (empty($billing_address) || empty($phone_number) || empty($selected_region)) {
+            echo "<script>alert('All fields are required!');</script>";
         } else {
             // Initialize cURL for PayMongo API
             $curl = curl_init();
@@ -115,10 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: payment.php');
                 exit();
             }
-        }
+        }        
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -290,7 +316,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="submit" name="remove_item" value="<?php echo $product_id; ?>">Remove</button>
                 </div>
             <?php endforeach; ?>
-            <div class="cart-total">Total: ₱<?php echo number_format($total, 2); ?></div>
+
+            <h3>Shipping Region</h3>
+            <select name="region" required>
+                <option value="">Select Region</option>
+                <option value="Luzon">Luzon</option>
+                <option value="Visayas">Visayas</option>
+                <option value="Mindanao">Mindanao</option>
+            </select>
+
+            <div class="cart-total">
+                Total: ₱<?php echo number_format($total, 2); ?><br>
+                Shipping: ₱<?php echo number_format($shipping_fee, 2); ?><br>
+                <strong>Grand Total: ₱<?php echo number_format($grand_total, 2); ?></strong>
+            </div>
 
             <h3>Billing Information</h3>
             <label for="billing_address">Billing Address:</label><br>

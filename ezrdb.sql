@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 14, 2024 at 04:50 PM
+-- Generation Time: Oct 14, 2024 at 06:25 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -55,6 +55,13 @@ CREATE TABLE `esports_events` (
   `hover_text` varchar(255) DEFAULT NULL,
   `image_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `esports_events`
+--
+
+INSERT INTO `esports_events` (`id`, `event_date`, `event_title`, `event_description`, `hover_text`, `image_url`) VALUES
+(1, '2024-10-25', 'eminem day', 'eminem visits manila', 'Eminem day', '../uploads/1900x1900-000000-80-0-0.jpg');
 
 -- --------------------------------------------------------
 
@@ -138,19 +145,20 @@ CREATE TABLE `product` (
   `price` decimal(10,2) NOT NULL,
   `quantity` int(255) NOT NULL,
   `imagePath` varchar(255) NOT NULL,
-  `description` varchar(255) NOT NULL
+  `description` varchar(255) NOT NULL,
+  `weight` int(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product`
 --
 
-INSERT INTO `product` (`id`, `name`, `price`, `quantity`, `imagePath`, `description`) VALUES
-(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 'prodimage/product1.jpg', 'The 1st edition of the VS EZR Bomber Jacket.'),
-(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 69, 'prodimage/product2.jpg', 'A black dri-fit shirt that is good to use for any activity.'),
-(9, 'VS6 EZR Bomber Jacket', 1599.00, 45, 'prodimage/product4.jpg', 'The 6th Edition of the VS EZR Bomber Jacket series.'),
-(10, 'EZR swimwear bundle 3', 1500.00, 54, 'prodimage/product6.jpg', 'Ezr\'s 3rd swimwear bundle with rash-guard shirt, shorts, and lanyard.'),
-(11, 'Piso Gcash', 1.00, 8, 'prodimage/piso candy.jpg', 'This should be an error since gcash minimum is 100 pesos for purchase');
+INSERT INTO `product` (`id`, `name`, `price`, `quantity`, `imagePath`, `description`, `weight`) VALUES
+(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 'prodimage/product1.jpg', 'The 1st edition of the VS EZR Bomber Jacket.', 700),
+(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 68, 'prodimage/product2.jpg', 'A black dri-fit shirt that is good to use for any activity.', 150),
+(9, 'VS6 EZR Bomber Jacket', 1599.00, 44, 'prodimage/product4.jpg', 'The 6th Edition of the VS EZR Bomber Jacket series.', 750),
+(10, 'EZR swimwear bundle 3', 1500.00, 54, 'prodimage/product6.jpg', '3rd edition swimwear bundle with rash-guard shirt, shorts, and lanyard.', 280),
+(11, 'Piso Gcash', 1.00, 8, 'prodimage/piso candy.jpg', 'This should be an error since gcash minimum is 100 pesos for purchase', 10);
 
 -- --------------------------------------------------------
 
@@ -222,7 +230,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `esports_events`
 --
 ALTER TABLE `esports_events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `event_registrations`

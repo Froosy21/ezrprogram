@@ -51,9 +51,10 @@ if ($uploadOk == 0) {
         $product_price = $_POST['product_price'];
         $product_quantity = $_POST['product_quantity'];
         $product_description = $_POST['product_description'];
+        $product_weight = $_POST['product_weight'];
 
 
-        $stmt = $conn->prepare("INSERT INTO product (name, price, quantity, imagePath, description) VALUES (?, ?, ?, ?, ?)"); // removed empty column name
+        $stmt = $conn->prepare("INSERT INTO product (name, price, quantity, imagePath, description, weight) VALUES (?, ?, ?, ?, ?)"); // removed empty column name
         $stmt->bind_param("sdsss", $product_name, $product_price, $product_quantity, $target_file, $product_description); // corrected type specification and added fifth parameter
 
         if ($stmt->execute()) {
