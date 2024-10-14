@@ -4,7 +4,7 @@ include('../LogReg/database.php');
 
 $product_id = (int)$_GET['id'];
 
-$sql = "SELECT id, name, price, quantity, imagePath, discount FROM product WHERE id = $product_id";
+$sql = "SELECT id, name, price, quantity, imagePath, description FROM product WHERE id = $product_id";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
@@ -61,6 +61,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
         .product-info {
             width: 60%;
             margin: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .product-description {
+            margin-top: 20px;
+        }
+
+        .product-description h3 {
+            margin-bottom: 10px;
+        }
+
+        .product-description p {
+            line-height: 1.6;
+            text-align: justify;
         }
         .product-image img {
             width: 100%;
@@ -143,6 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
     </header>
 
     <main>
+        
         <div class="product-detail">
             <div class="product-image">
                 <img src="../admin/<?php echo htmlspecialchars($product['imagePath']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
@@ -156,10 +173,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
                     <button type="submit" name="add_to_cart">Add to Cart</button>
                 </form>
             </div>
+            <div class="product-description">
+                <h3>Description</h3>
+                <p><?php echo htmlspecialchars($product['description']); ?></p>
+            </div>
         </div>
     </main>
     <script>
-        // Hamburger menu toggle
         const hamburgerMenu = document.querySelector('.hamburger-menu');
         const hamburgerIcon = document.querySelector('.hamburger-icon');
         const dropdownMenu = document.querySelector('.dropdown-menu');

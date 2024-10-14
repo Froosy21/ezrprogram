@@ -4,8 +4,7 @@ include('../LogReg/database.php');
 
 // Check if the user is logged in
 if (!isset($_SESSION['email'])) {
-    // Redirect to login page if not logged in
-    header('Location: ../LogReg/login.php'); // Adjust the path to your login page
+    header('Location: ../LogReg/login.php');
     exit();
 }
 
@@ -35,9 +34,9 @@ foreach ($cart as $product_id => $quantity) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_cart'])) {
         foreach ($_POST['quantities'] as $product_id => $quantity) {
-            $quantity = max(0, (int)$quantity);  // Prevent negative quantities
+            $quantity = max(0, (int)$quantity);
             if ($quantity === 0) {
-                unset($_SESSION['cart'][$product_id]); // Remove item if quantity is zero
+                unset($_SESSION['cart'][$product_id]);
             } else {
                 $_SESSION['cart'][$product_id] = $quantity;
             }
@@ -48,73 +47,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['remove_item'])) {
         $product_id = $_POST['remove_item'];
-        unset($_SESSION['cart'][$product_id]); // Remove item from cart
+        unset($_SESSION['cart'][$product_id]);
         header('Location: cart.php');
         exit();
     }
 
     if (isset($_POST['pay'])) {
+        // Get billing address and phone number from the form
+        $billing_address = trim($_POST['billing_address']);
+        $phone_number = trim($_POST['phone_number']);
         $email = $_SESSION['email'];
-        $amount = $total * 100;  // Amount in cents for PayMongo
+        $amount = $total * 100; // Amount in cents for PayMongo
 
-        // Initialize cURL for PayMongo API
-        $curl = curl_init();
-        $paymongo_api_key = 'sk_test_Rq5WQbJcwvAnu4ewEgurmSfz';
+        // Check if the inputs are filled
+        if (empty($billing_address) || empty($phone_number)) {
+            echo "<script>alert('Billing address and phone number are required!');</script>";
+        } else {
+            // Initialize cURL for PayMongo API
+            $curl = curl_init();
+            $paymongo_api_key = 'sk_test_Rq5WQbJcwvAnu4ewEgurmSfz';
 
-        // Prepare data for PayMongo Link API
-        $data = [
-            'data' => [
-                'attributes' => [
-                    'amount' => $amount,
-                    'currency' => 'PHP',
-                    'description' => 'Order Payment for ' . $email,
-                    'statement_descriptor' => 'EZReborn',
-                    'redirect' => [
-                        'success' => 'home.php',
-                        'failed' => 'payments/payment_failed.php'
+            $data = [
+                'data' => [
+                    'attributes' => [
+                        'amount' => $amount,
+                        'currency' => 'PHP',
+                        'description' => 'Order Payment for ' . $email,
+                        'statement_descriptor' => 'EZReborn',
+                        'redirect' => [
+                            'success' => 'home.php',
+                            'failed' => 'payments/payment_failed.php'
+                        ]
                     ]
                 ]
-            ]
-        ];
+            ];
 
-        // Set up cURL options
-        curl_setopt_array($curl, [
-            CURLOPT_URL => "https://api.paymongo.com/v1/links",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => [
-                "Authorization: Basic " . base64_encode($paymongo_api_key),
-                "Content-Type: application/json"
-            ]
-        ]);
+            curl_setopt_array($curl, [
+                CURLOPT_URL => "https://api.paymongo.com/v1/links",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($data),
+                CURLOPT_HTTPHEADER => [
+                    "Authorization: Basic " . base64_encode($paymongo_api_key),
+                    "Content-Type: application/json"
+                ]
+            ]);
 
-        // Execute cURL request
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-        curl_close($curl);
+            $response = curl_exec($curl);
+            $err = curl_error($curl);
+            curl_close($curl);
 
-        // Error handling
-        if ($err) {
-            echo "cURL Error #:" . $err;
-        } else {
-            $response_data = json_decode($response, true);
-            $payment_url = $response_data['data']['attributes']['checkout_url'];
+            if ($err) {
+                echo "cURL Error #:" . $err;
+            } else {
+                $response_data = json_decode($response, true);
+                $payment_url = $response_data['data']['attributes']['checkout_url'];
+                $_SESSION['payment_url'] = $payment_url;
 
-            // Store the payment link in the session
-            $_SESSION['payment_url'] = $payment_url;
+                // Store order details with billing address and phone number
+                foreach ($cart as $product_id => $quantity) {
+                    $stmt = $conn->prepare("INSERT INTO orders (email, product_name, quantity, price, address, phonenum, order_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt->bind_param("ssiiss", $email, $products[$product_id]['name'], $quantity, $products[$product_id]['price'], $billing_address, $phone_number);
+                    $stmt->execute();
+                    $stmt->close();
+                }
 
-            // Store order details in the orders table
-            foreach ($cart as $product_id => $quantity) {
-                $stmt = $conn->prepare("INSERT INTO orders (email, product_name, quantity, price, order_date) VALUES (?, ?, ?, ?, NOW())");
-                $stmt->bind_param("ssii", $email, $products[$product_id]['name'], $quantity, $products[$product_id]['price']);
-                $stmt->execute();
-                $stmt->close();
+                header('Location: payment.php');
+                exit();
             }
-
-            // Redirect to payment page
-            header('Location: payment.php');
-            exit();
         }
     }
 }
@@ -291,6 +291,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endforeach; ?>
             <div class="cart-total">Total: ₱<?php echo number_format($total, 2); ?></div>
+
+            <h3>Billing Information</h3>
+            <label for="billing_address">Billing Address:</label><br>
+            <input type="text" id="billing_address" name="billing_address" required style="width: 100%; margin-bottom: 10px;"><br>
+
+            <label for="phone_number">Phone Number:</label><br>
+            <input type="text" id="phone_number" name="phone_number" required style="width: 100%; margin-bottom: 10px;"><br>
+
             <button type="submit" name="update_cart">Update Cart</button>
             <button type="submit" name="pay">Pay</button>
         <?php endif; ?>

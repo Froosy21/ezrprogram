@@ -2,7 +2,7 @@
 session_start();
 include ('../LogReg/database.php');
 
-$sql = "SELECT id, name, price, quantity, imagePath, discount FROM product";
+$sql = "SELECT id, name, price, quantity, imagePath FROM product";
 $result = $conn->query($sql);
 
 $products = [];
@@ -13,7 +13,6 @@ if ($result->num_rows > 0) {
             'price' => $row['price'],
             'stock' => $row['quantity'],  
             'image' => '../admin/' . $row['imagePath'],
-            'discount' => $row['discount']
         ];
     }
 }
@@ -74,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     <title>Shop - EZReborn</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Main Styles */
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
@@ -124,7 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             color: #c21212;
         }
 
-        /* Hamburger Menu */
         .hamburger-menu {
             position: relative;
             display: inline-block;
@@ -165,12 +162,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             background-color: #f1f1f1;
         }
 
-        /* Show dropdown when active */
         .hamburger-menu.active .dropdown-menu {
             display: block;
         }
 
-        /* Shop Styles */
         .shop-container {
             width: 100%;
             max-width: 1200px;
@@ -240,7 +235,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <li><a href="cart.php">Cart</a></li>
             </ul>
         </nav>
-        <!-- Hamburger menu -->
         <div class="hamburger-menu">
             <div class="hamburger-icon">&#9776;</div>
             <div class="dropdown-menu">
@@ -255,7 +249,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
     <main>
         <div class="shop-container">
-            <!-- Search bar -->
             <form class="search-bar" action="shop.php" method="get">
                 <input type="text" name="search" placeholder="Search for products..." value="<?php echo htmlspecialchars($search_query); ?>">
                 <button type="submit">Search</button>
@@ -272,7 +265,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                                 <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                             </a>
 
-                            <!-- Display stock status -->
                             <?php if ($product['stock'] == 0): ?>
                                 <p class="sold-out">SOLD OUT</p>
                             <?php else: ?>
@@ -280,7 +272,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                                 <p>₱<?php echo number_format($product['price'], 2); ?></p>
                             <?php endif; ?>
 
-                            <!-- Add to Cart form or Login prompt -->
                             <form action="shop.php" method="post">
                                 <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
                                 <?php if ($product['stock'] > 0): ?>

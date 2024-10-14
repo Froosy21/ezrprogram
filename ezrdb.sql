@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 23, 2024 at 08:57 AM
+-- Generation Time: Oct 14, 2024 at 04:50 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -77,6 +77,32 @@ CREATE TABLE `event_registrations` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `inventory`
+--
+
+CREATE TABLE `inventory` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `in_stock` int(255) NOT NULL,
+  `out_stock` int(255) NOT NULL,
+  `status` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `inventory`
+--
+
+INSERT INTO `inventory` (`id`, `name`, `price`, `in_stock`, `out_stock`, `status`) VALUES
+(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 0, 'In Stock'),
+(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 68, 4, 'In Stock'),
+(9, 'VS6 EZR Bomber Jacket', 1599.00, 45, 2, 'In Stock'),
+(10, 'EZR swimwear bundle 3', 1500.00, 56, 1, 'In Stock'),
+(11, 'Piso Gcash', 1.00, 8, 0, 'In Stock');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -86,40 +112,19 @@ CREATE TABLE `orders` (
   `product_name` varchar(255) NOT NULL,
   `quantity` int(11) NOT NULL,
   `price` decimal(10,2) NOT NULL,
-  `order_date` date NOT NULL
+  `order_date` date NOT NULL,
+  `phonenum` varchar(11) NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `status` enum('Pending','Paid') NOT NULL DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`id`, `email`, `product_name`, `quantity`, `price`, `order_date`) VALUES
-(0, 'mictest@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 899.00, '0000-00-00'),
-(0, 'mictest@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-07-18'),
-(0, 'mictest@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 2, 899.00, '2024-07-18'),
-(0, 'jykazi@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-07-18'),
-(0, 'jykazi@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-07-18'),
-(0, '', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-09-16'),
-(0, '', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-09-16'),
-(0, 'mictest@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-09-16'),
-(0, 'mictest@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-09-20'),
-(0, 'mictest@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-09-23'),
-(0, 'mictest@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mictest@gmail.com', 'EZR White Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mictest@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-09-23'),
-(0, 'mictest@gmail.com', 'EZR White Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mountaincobra@gmail.com', 'EZR swimwear bundle 3', 2, 1500.00, '2024-09-23'),
-(0, 'mountaincobra@gmail.com', 'VS6 EZR Bomber Jacket', 1, 1599.00, '2024-09-23'),
-(0, 'mountaincobra@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mountaincobra@gmail.com', 'EZR White Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mikejordan@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-09-23'),
-(0, 'mikejordan@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mikejordan@gmail.com', 'EZR White Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'mikejordan@gmail.com', 'VS6 EZR Bomber Jacket', 1, 1599.00, '2024-09-23'),
-(0, 'mikejordan@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-09-23'),
-(0, 'jykazi@gmail.com', 'VS Collection EZR Bomber Jacket', 2, 1499.00, '2024-09-23'),
-(0, 'jykazi@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23'),
-(0, 'jykazi@gmail.com', 'EZR White Dri-FIT Varsity Shirt', 1, 699.00, '2024-09-23');
+INSERT INTO `orders` (`id`, `email`, `product_name`, `quantity`, `price`, `order_date`, `phonenum`, `address`, `status`) VALUES
+(42, 'mictest@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-10-14', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid'),
+(43, 'gerbyombina21@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-10-14', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid');
 
 -- --------------------------------------------------------
 
@@ -132,20 +137,20 @@ CREATE TABLE `product` (
   `name` varchar(255) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `quantity` int(255) NOT NULL,
-  `discount` decimal(10,2) NOT NULL,
-  `imagePath` varchar(255) NOT NULL
+  `imagePath` varchar(255) NOT NULL,
+  `description` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product`
 --
 
-INSERT INTO `product` (`id`, `name`, `price`, `quantity`, `discount`, `imagePath`) VALUES
-(6, 'VS Collection EZR Bomber Jacket', 1499.00, 45, 6.67, 'prodimage/product1.jpg'),
-(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 73, 0.00, 'prodimage/product2.jpg'),
-(8, 'EZR White Dri-FIT Varsity Shirt', 699.00, 72, 0.00, 'prodimage/product3.jpg'),
-(9, 'VS6 EZR Bomber Jacket', 1599.00, 49, 0.00, 'prodimage/product4.jpg'),
-(10, 'EZR swimwear bundle 3', 1500.00, 57, 10.20, 'prodimage/product6.jpg');
+INSERT INTO `product` (`id`, `name`, `price`, `quantity`, `imagePath`, `description`) VALUES
+(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 'prodimage/product1.jpg', 'The 1st edition of the VS EZR Bomber Jacket.'),
+(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 69, 'prodimage/product2.jpg', 'A black dri-fit shirt that is good to use for any activity.'),
+(9, 'VS6 EZR Bomber Jacket', 1599.00, 45, 'prodimage/product4.jpg', 'The 6th Edition of the VS EZR Bomber Jacket series.'),
+(10, 'EZR swimwear bundle 3', 1500.00, 54, 'prodimage/product6.jpg', 'Ezr\'s 3rd swimwear bundle with rash-guard shirt, shorts, and lanyard.'),
+(11, 'Piso Gcash', 1.00, 8, 'prodimage/piso candy.jpg', 'This should be an error since gcash minimum is 100 pesos for purchase');
 
 -- --------------------------------------------------------
 
@@ -157,7 +162,7 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `fname` text NOT NULL,
   `lname` text NOT NULL,
-  `phonenum` int(11) NOT NULL,
+  `phonenum` varchar(11) NOT NULL,
   `email` varchar(30) NOT NULL,
   `userpass` varchar(16) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -167,10 +172,12 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `fname`, `lname`, `phonenum`, `email`, `userpass`) VALUES
-(12, 'testing', 'tester', 2147483647, 'mictest@gmail.com', 'mictest123'),
-(13, 'jykazi', 'testing', 2147483647, 'jykazi@gmail.com', 'testing123'),
-(14, 'kaourbeth', 'Villabina', 2147483647, 'mountaincobra@gmail.com', 'mountaincobra123'),
-(15, 'mike', 'testing', 2147483647, 'mikejordan@gmail.com', 'mike123');
+(12, 'testing', 'tester', '09123123123', 'mictest@gmail.com', 'mictest123'),
+(13, 'jykazi', 'testing', '2147483647', 'jykazi@gmail.com', 'testing123'),
+(14, 'kaourbeth', 'Villabina', '2147483647', 'mountaincobra@gmail.com', 'mountaincobra123'),
+(15, 'mike', 'testing', '2147483647', 'mikejordan@gmail.com', 'mike123'),
+(16, 'Jybeth', 'Ombina', '2147483647', 'jj@gmail.com', 'jjo123'),
+(17, 'Jybeth Jhan', 'Ombina', '09271249790', 'gerbyombina21@gmail.com', 'Froosy21');
 
 --
 -- Indexes for dumped tables
@@ -188,6 +195,12 @@ ALTER TABLE `esports_events`
 ALTER TABLE `event_registrations`
   ADD PRIMARY KEY (`id`),
   ADD KEY `event_id` (`event_id`);
+
+--
+-- Indexes for table `orders`
+--
+ALTER TABLE `orders`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `product`
@@ -218,16 +231,22 @@ ALTER TABLE `event_registrations`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
+-- AUTO_INCREMENT for table `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+
+--
 -- AUTO_INCREMENT for table `product`
 --
 ALTER TABLE `product`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- Constraints for dumped tables
