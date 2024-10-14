@@ -7,7 +7,7 @@
 <body>
   <nav class="sidebar">
     <ul>
-      <li><a href="javascript:void(0)" onclick="loadPage('dashboard')">Dashboard</a></li>
+      <li>Dashboard</a></li>
       <li><a href="javascript:void(0)" onclick="loadPage('orders')">Orders</a></li>
       <li><a href="javascript:void(0)" onclick="loadPage('users')">User Management</a></li>
       <li><a href="javascript:void(0)" onclick="loadPage('admin_events')">Events</a></li>

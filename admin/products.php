@@ -22,12 +22,12 @@
             <input type="number" id="product-quantity" name="product_quantity" step="1" required>
         </div>
         <div class="form-group">
-            <label for="product-discount">Discount (%):</label>
-            <input type="number" id="product-discount" name="product_discount" step="0.01">
-        </div>
-        <div class="form-group">
             <label for="product-image">Product Image:</label>
             <input type="file" id="product-image" name="product_image" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="product-description">Description:</label>
+            <input type="number" id="product-description" name="product_description" required>
         </div>
         <div class="form-group">
             <button type="submit">Add Product</button>

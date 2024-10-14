@@ -2,8 +2,8 @@
 session_start();
 include('../LogReg/database.php');
 
-// Fetch available products, including those with 0 quantity
-$inventory_sql = "SELECT id, name, price, quantity FROM product";
+// Fetch available products from the 'inventory' table
+$inventory_sql = "SELECT id, name, price, in_stock, out_stock, status FROM inventory";
 $result = $conn->query($inventory_sql);
 
 $products = [];
@@ -19,25 +19,29 @@ if ($result) {
     $message = "Error fetching products: " . $conn->error;
 }
 
-// After successful payment, update the quantity in the database
+// After payment, update in_stock and out_stock in the inventory table
 if (isset($_SESSION['cart'])) {
-    foreach ($_SESSION['cart'] as $product_id => $quantity) {
+    foreach ($_SESSION['cart'] as $product_id => $quantity_purchased) {
         // Fetch the current stock for this product
-        $check_quantity_sql = "SELECT quantity FROM product WHERE id = ?";
+        $check_quantity_sql = "SELECT in_stock, out_stock FROM inventory WHERE id = ?";
         $stmt = $conn->prepare($check_quantity_sql);
         $stmt->bind_param("i", $product_id);
         $stmt->execute();
-        $stmt->bind_result($current_quantity);
+        $stmt->bind_result($current_stock, $current_out_stock);
         $stmt->fetch();
         $stmt->close();
 
-        // Calculate new quantity and ensure it doesn't go below 0
-        $new_quantity = max(0, $current_quantity - $quantity);
+        // Calculate new in_stock and out_stock values
+        $new_in_stock = max(0, $current_stock - $quantity_purchased);
+        $new_out_stock = $current_out_stock + $quantity_purchased;
 
-        // Update quantity in the product table
-        $update_quantity_sql = "UPDATE product SET quantity = ? WHERE id = ?";
-        $stmt = $conn->prepare($update_quantity_sql);
-        $stmt->bind_param("ii", $new_quantity, $product_id);
+        // Determine the new status
+        $new_status = ($new_in_stock == 0) ? 'Sold Out' : 'In Stock';
+
+        // Update the inventory table
+        $update_inventory_sql = "UPDATE inventory SET in_stock = ?, out_stock = ?, status = ? WHERE id = ?";
+        $stmt = $conn->prepare($update_inventory_sql);
+        $stmt->bind_param("iisi", $new_in_stock, $new_out_stock, $new_status, $product_id);
         $stmt->execute();
         $stmt->close();
     }
@@ -46,8 +50,6 @@ if (isset($_SESSION['cart'])) {
 
 $conn->close();
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -70,7 +72,8 @@ $conn->close();
                 <tr>
                     <th>Product Name</th>
                     <th>Price</th>
-                    <th>Quantity</th>
+                    <th>In</th>
+                    <th>Out </th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -79,14 +82,9 @@ $conn->close();
                     <tr>
                         <td><?php echo htmlspecialchars($product['name']); ?></td>
                         <td>₱<?php echo number_format($product['price'], 2); ?></td>
-                        <td><?php echo htmlspecialchars($product['quantity']); ?></td>
-                        <td>
-                            <?php if ($product['quantity'] == 0): ?>
-                                Sold Out on <?php echo date('F j, Y'); ?>
-                            <?php else: ?>
-                                In Stock
-                            <?php endif; ?>
-                        </td>
+                        <td><?php echo htmlspecialchars($product['in_stock']); ?></td>
+                        <td><?php echo htmlspecialchars($product['out_stock']); ?></td>
+                        <td><?php echo htmlspecialchars($product['status']); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

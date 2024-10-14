@@ -50,11 +50,11 @@ if ($uploadOk == 0) {
         $product_name = $_POST['product_name'];
         $product_price = $_POST['product_price'];
         $product_quantity = $_POST['product_quantity'];
-        $product_discount = isset($_POST['product_discount']) ? $_POST['product_discount'] : 0;
+        $product_description = $_POST['product_description'];
 
 
-        $stmt = $conn->prepare("INSERT INTO product (name, price, quantity, discount, imagePath) VALUES (?, ?, ?, ?, ?)"); // removed empty column name
-        $stmt->bind_param("sdsss", $product_name, $product_price, $product_quantity, $product_discount, $target_file); // corrected type specification and added fifth parameter
+        $stmt = $conn->prepare("INSERT INTO product (name, price, quantity, imagePath, description) VALUES (?, ?, ?, ?, ?)"); // removed empty column name
+        $stmt->bind_param("sdsss", $product_name, $product_price, $product_quantity, $target_file, $product_description); // corrected type specification and added fifth parameter
 
         if ($stmt->execute()) {
             header('Location: home.php');
