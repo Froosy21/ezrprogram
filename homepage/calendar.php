@@ -2,11 +2,11 @@
 session_start();
 include('../LogReg/database.php');
 
-// Get the current month and year from the URL or set defaults
+
 $current_month = isset($_GET['month']) ? intval($_GET['month']) : date('m');
 $current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
-// Adjust month and year for navigation
+
 if (isset($_GET['action'])) {
     if ($_GET['action'] == 'prev') {
         if ($current_month == 1) {
@@ -25,13 +25,13 @@ if (isset($_GET['action'])) {
     }
 }
 
-// Fetch events from the database for the selected month and year
+
 $query = "SELECT * FROM esports_events WHERE MONTH(event_date) = $current_month AND YEAR(event_date) = $current_year ORDER BY event_date";
 $result = mysqli_query($conn, $query);
 
 $events_by_date = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $date = date('Y-m-d', strtotime($row['event_date'])); // Ensure correct date format
+    $date = date('Y-m-d', strtotime($row['event_date'])); 
     $events_by_date[$date][] = [
         'id' => $row['id'],
         'title' => $row['event_title'],
@@ -41,7 +41,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     ];
 }
 
-// Set the number of days in the current month
+
 $days_in_month = cal_days_in_month(CAL_GREGORIAN, $current_month, $current_year);
 $first_day_of_month = strtotime("$current_year-$current_month-01");
 $day_of_week = date('w', $first_day_of_month);
@@ -152,18 +152,18 @@ $day_of_week = date('w', $first_day_of_month);
         </div>
         <div id="calendar">
             <?php
-            // Print empty cells for days before the first of the month
+            
             for ($i = 0; $i < $day_of_week; $i++) {
                 echo '<div class="day"></div>';
             }
 
-            // Print days of the month
+            
             for ($day = 1; $day <= $days_in_month; $day++) {
                 $date = sprintf('%04d-%02d-%02d', $current_year, $current_month, $day);
                 echo '<div class="day">';
                 echo "<strong>$day</strong><br>";
 
-                // Display events for that day
+                
                 if (isset($events_by_date[$date])) {
                     foreach ($events_by_date[$date] as $event) {
                         echo '<div class="event-cell">';
