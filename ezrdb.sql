@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 14, 2024 at 06:25 PM
+-- Generation Time: Oct 15, 2024 at 02:09 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -101,7 +101,7 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `name`, `price`, `in_stock`, `out_stock`, `status`) VALUES
-(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 0, 'In Stock'),
+(6, 'VS Collection EZR Bomber Jacket', 1499.00, 36, 3, 'In Stock'),
 (7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 68, 4, 'In Stock'),
 (9, 'VS6 EZR Bomber Jacket', 1599.00, 45, 2, 'In Stock'),
 (10, 'EZR swimwear bundle 3', 1500.00, 56, 1, 'In Stock'),
@@ -131,7 +131,9 @@ CREATE TABLE `orders` (
 
 INSERT INTO `orders` (`id`, `email`, `product_name`, `quantity`, `price`, `order_date`, `phonenum`, `address`, `status`) VALUES
 (42, 'mictest@gmail.com', 'EZR Black Dri-FIT Varsity Shirt', 1, 699.00, '2024-10-14', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid'),
-(43, 'gerbyombina21@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-10-14', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid');
+(43, 'gerbyombina21@gmail.com', 'EZR swimwear bundle 3', 1, 1500.00, '2024-10-14', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid'),
+(44, 'gerbyombina21@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-10-15', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid'),
+(49, 'gerbyombina21@gmail.com', 'VS Collection EZR Bomber Jacket', 1, 1499.00, '2024-10-15', '09271249790', 'F. Parcon St., Pototan, Iloilo City', 'Paid');
 
 -- --------------------------------------------------------
 
@@ -154,8 +156,8 @@ CREATE TABLE `product` (
 --
 
 INSERT INTO `product` (`id`, `name`, `price`, `quantity`, `imagePath`, `description`, `weight`) VALUES
-(6, 'VS Collection EZR Bomber Jacket', 1499.00, 39, 'prodimage/product1.jpg', 'The 1st edition of the VS EZR Bomber Jacket.', 700),
-(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 68, 'prodimage/product2.jpg', 'A black dri-fit shirt that is good to use for any activity.', 150),
+(6, 'VS Collection EZR Bomber Jacket', 1499.00, 36, 'prodimage/product1.jpg', 'The 1st edition of the VS EZR Bomber Jacket.', 700),
+(7, 'EZR Black Dri-FIT Varsity Shirt', 699.00, 67, 'prodimage/product2.jpg', 'A black dri-fit shirt that is good to use for any activity.', 150),
 (9, 'VS6 EZR Bomber Jacket', 1599.00, 44, 'prodimage/product4.jpg', 'The 6th Edition of the VS EZR Bomber Jacket series.', 750),
 (10, 'EZR swimwear bundle 3', 1500.00, 54, 'prodimage/product6.jpg', '3rd edition swimwear bundle with rash-guard shirt, shorts, and lanyard.', 280),
 (11, 'Piso Gcash', 1.00, 8, 'prodimage/piso candy.jpg', 'This should be an error since gcash minimum is 100 pesos for purchase', 10);
@@ -242,7 +244,7 @@ ALTER TABLE `event_registrations`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `product`

@@ -52,16 +52,19 @@ $payments = getAllPayments();
                     <th>Description</th>
                     <th>Created At</th>
                     <th>Email</th>
+                    <th>Payment Link</th> <!-- New column for payment link -->
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($payments)) : ?>
                     <?php foreach ($payments as $payment) : 
                         // Fetch billing details if available
-                        //get status, update status, 
                         $billing = $payment['attributes']['billing'];
                         $payerEmail = isset($billing['email']) ? $billing['email'] : 'N/A';
                         $payerName = isset($billing['name']) ? $billing['name'] : 'N/A';
+
+                        // Fetch the payment link if available
+                        $paymentLink = isset($payment['attributes']['payment_link']) ? $payment['attributes']['payment_link'] : 'N/A';
                     ?>
                         <tr>
                             <td><?php echo $payment['id']; ?></td>
@@ -70,6 +73,13 @@ $payments = getAllPayments();
                             <td><?php echo $payment['attributes']['description']; ?></td>
                             <td><?php echo date('Y-m-d H:i:s', $payment['attributes']['created_at']); ?></td>
                             <td><?php echo $payerEmail; ?></td>
+                            <td>
+                                <?php if ($paymentLink !== 'N/A') : ?>
+                                    <a href="<?php echo $paymentLink; ?>" target="_blank">View Payment</a>
+                                <?php else : ?>
+                                    N/A
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else : ?>
@@ -82,4 +92,3 @@ $payments = getAllPayments();
     </div>
 </body>
 </html>
-

@@ -1,9 +1,11 @@
 <?php
 include('../LogReg/database.php'); // Include your database connection
 
+// Query to fetch all orders, ordered by date and email
 $sql = "SELECT * FROM orders ORDER BY order_date DESC, email";
 $result = $conn->query($sql);
 
+// Organize orders by date and email
 $orders = [];
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
@@ -27,8 +29,8 @@ $conn->close();
                 <th>Date</th>
                 <th>Email</th>
                 <th>Orders</th>
-                <th>Billing Address</th> <!-- New Column -->
-                <th>Phone Number</th> <!-- New Column -->
+                <th>Billing Address</th>
+                <th>Phone Number</th>
                 <th>Total Purchase</th>
                 <th>Status</th>
             </tr>
@@ -48,14 +50,13 @@ $conn->close();
                                 ?>
                                     <li>
                                         <?php echo htmlspecialchars($order['product_name']); ?> 
-                                        (<?php echo htmlspecialchars($order['quantity']); ?>) - 
-                                        ₱<?php echo number_format($order['price'], 2); ?>
+                                        (<?php echo htmlspecialchars($order['quantity']); ?>) 
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
                         </td>
-                        <td><?php echo htmlspecialchars($ordersByDateAndEmail[0]['address']); ?></td> <!-- Address -->
-                        <td><?php echo htmlspecialchars($ordersByDateAndEmail[0]['phonenum']); ?></td> <!-- Phone Number -->
+                        <td><?php echo htmlspecialchars($ordersByDateAndEmail[0]['address']); ?></td>
+                        <td><?php echo htmlspecialchars($ordersByDateAndEmail[0]['phonenum']); ?></td>
                         <td>₱<?php echo number_format($totalPurchase, 2); ?></td>
                         <td><?php echo htmlspecialchars($ordersByDateAndEmail[0]['status']); ?></td>
                     </tr>

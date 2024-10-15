@@ -43,22 +43,31 @@ $shipping_rates = [
     'Mindanao' => [115, 205, 230, 340, 450, 560]
 ];
 
-// Determine shipping fee based on total weight and region
+// Function to determine shipping fee based on weight and region
 function calculateShipping($weight, $region, $rates) {
-    $index = min(ceil($weight / 1000), 6) - 1; // Determine rate index
+    $index = min(ceil($weight / 1000), 6) - 1; // Determine rate index based on weight
     return $rates[$region][$index];
 }
 
-$shipping_fee = 0;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['region'])) {
+// Handle AJAX request for shipping calculation
+if (isset($_POST['ajax']) && $_POST['ajax'] == 'calculate_shipping') {
     $selected_region = $_POST['region'];
     $shipping_fee = calculateShipping($total_weight, $selected_region, $shipping_rates);
+    $grand_total = $total + $shipping_fee;
+
+    // Store the shipping fee in the session for later use during payment processing
+    $_SESSION['shipping_fee'] = $shipping_fee;
+
+    // Return JSON response with updated shipping fee and total
+    echo json_encode([
+        'shipping_fee' => number_format($shipping_fee, 2),
+        'grand_total' => number_format($grand_total, 2)
+    ]);
+    exit();
 }
 
-$grand_total = $total + $shipping_fee; // Final total including shipping
-
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Handle form submissions for updating cart, removing items, and payment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax'])) {
     if (isset($_POST['update_cart'])) {
         foreach ($_POST['quantities'] as $product_id => $quantity) {
             $quantity = max(0, (int)$quantity);
@@ -78,15 +87,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: cart.php');
         exit();
     }
-
+    
     if (isset($_POST['pay'])) {
+        // Get billing address and phone number from the form
         $billing_address = trim($_POST['billing_address']);
         $phone_number = trim($_POST['phone_number']);
         $email = $_SESSION['email'];
-        $amount = $grand_total * 100; // For PayMongo
 
-        if (empty($billing_address) || empty($phone_number) || empty($selected_region)) {
-            echo "<script>alert('All fields are required!');</script>";
+        // Retrieve shipping fee from the session
+        $shipping_fee = isset($_SESSION['shipping_fee']) ? $_SESSION['shipping_fee'] : 0;
+        $grand_total = $total + $shipping_fee; // Add the shipping fee to the total
+
+        $amount = $grand_total * 100; // Amount in cents for PayMongo
+
+        // Check if the inputs are filled
+        if (empty($billing_address) || empty($phone_number)) {
+            echo "<script>alert('Billing address and phone number are required!');</script>";
         } else {
             // Initialize cURL for PayMongo API
             $curl = curl_init();
@@ -140,11 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: payment.php');
                 exit();
             }
-        }        
+        }
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -287,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <li><a href="calendar.php">Events</a></li>
             <li><a href="about.php">About Us</a></li>
             <li><a href="cart.php">Cart</a></li>
-        </ul>
+        </ul>    
     </nav>
     <div class="hamburger-menu">
         <div class="hamburger-icon">&#9776;</div>
@@ -318,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endforeach; ?>
 
             <h3>Shipping Region</h3>
-            <select name="region" required>
+            <select name="region" id="region" required>
                 <option value="">Select Region</option>
                 <option value="Luzon">Luzon</option>
                 <option value="Visayas">Visayas</option>
@@ -327,8 +342,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="cart-total">
                 Total: ₱<?php echo number_format($total, 2); ?><br>
-                Shipping: ₱<?php echo number_format($shipping_fee, 2); ?><br>
-                <strong>Grand Total: ₱<?php echo number_format($grand_total, 2); ?></strong>
+                Shipping: ₱<span id="shipping_fee">0.00</span><br>
+                <strong>Grand Total: ₱<span id="grand_total"><?php echo number_format($total, 2); ?></span></strong>
             </div>
 
             <h3>Billing Information</h3>
@@ -345,10 +360,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </main>
 
 <script>
-    // Add hamburger menu functionality
-    document.querySelector('.hamburger-icon').addEventListener('click', function () {
-        this.parentElement.classList.toggle('active');
+// Dynamically update shipping and total when region is selected
+document.getElementById('region').addEventListener('change', function() {
+    var region = this.value;
+
+    // Send AJAX request to calculate shipping
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'cart.php', true);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+    xhr.onload = function() {
+        if (this.status === 200) {
+            var response = JSON.parse(this.responseText);
+            document.getElementById('shipping_fee').textContent = response.shipping_fee;
+            document.getElementById('grand_total').textContent = response.grand_total;
+        }
+    };
+
+    xhr.send('ajax=calculate_shipping&region=' + region);
+});
+</script>
+
+<script>
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    const hamburgerIcon = document.querySelector('.hamburger-icon');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+
+    hamburgerIcon.addEventListener('click', () => {
+        hamburgerMenu.classList.toggle('active');
     });
 </script>
+
 </body>
 </html>

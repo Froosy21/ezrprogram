@@ -1,12 +1,30 @@
 <?php
 session_start();
-include('../LogReg/database.php'); // Include database connection
+include('../LogReg/database.php');
 
-$email = $_SESSION['email']; // Get the logged-in user's email
+// Ensure user is logged in
+if (!isset($_SESSION['email'])) {
+    header('Location: ../LogReg/login.php');
+    exit();
+}
 
-// Fetch the user's order history
-$sql = "SELECT product_name, quantity, price, order_date FROM orders WHERE email = '$email'";
-$result = $conn->query($sql);
+// Fetch logged-in user's email
+$email = $_SESSION['email'];
+
+// Fetch orders for the logged-in user including payment status
+$sql = "SELECT product_name, quantity, price, address, phonenum, order_date, status FROM orders WHERE email = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$orders = [];
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $orders[] = $row;
+    }
+}
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -14,7 +32,7 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><title>Orders - EZReborn</title></title>
+    <title>Your Orders - EZReborn</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Hamburger Menu */
@@ -66,7 +84,7 @@ $result = $conn->query($sql);
 </head>
 <body>
 <header>
-        <img src="img/EzR Logo.png" alt="Logo" class="logo">
+<img src="img/EzR Logo.png" alt="Logo" class="logo">
         <h1>EZ reborn gears</h1>
         <nav>
             <ul>
@@ -88,33 +106,39 @@ $result = $conn->query($sql);
                 </ul>
             </div>
         </div>
-    </header>
-    <h2>Your Orders</h2>
-    <?php if ($result->num_rows > 0): ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>Product Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Order Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($order = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo $order['product_name']; ?></td>
-                        <td><?php echo $order['quantity']; ?></td>
-                        <td>₱<?php echo number_format($order['price'], 2); ?></td>
-                        <td><?php echo $order['order_date']; ?></td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+</header>
+
+<main class="orders-container">
+    <p class="tracking-notice">
+        If you want to track your orders, kindly copy the tracking number sent to you by J&T and paste it onto this 
+        <a href="https://www.jtexpress.ph/trajectoryQuery" target="_blank">link</a>. Thank you.
+    </p>
+
+    <h2>Order History</h2>
+    
+    <?php if (empty($orders)): ?>
+        <p>You have no orders yet.</p>
     <?php else: ?>
-        <p>No orders found.</p>
+        <?php foreach ($orders as $order): ?>
+            <div class="order-item">
+                <h3>Product: <?php echo htmlspecialchars($order['product_name']); ?></h3>
+                <p>Quantity: <?php echo htmlspecialchars($order['quantity']); ?></p>
+                <p>Price: ₱<?php echo number_format($order['price'], 2); ?></p>
+                <p>Shipping Address: <?php echo htmlspecialchars($order['address']); ?></p>
+                <p>Phone Number: <?php echo htmlspecialchars($order['phonenum']); ?></p>
+                <p>Order Date: <?php echo htmlspecialchars($order['order_date']); ?></p>
+                
+                <?php if ($order['status'] === 'unpaid'): ?>
+                    <p>Status: <span style="color: red;">Unpaid</span></p>
+                    <p><a class="payment-link" href="<?php echo htmlspecialchars($order['payment_link']); ?>">Complete Payment</a></p>
+                <?php else: ?>
+                    <p>Status: <span style="color: green;">Paid</span></p>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
     <?php endif; ?>
-    <script>
+</main>
+<script>
         // Hamburger menu toggle
         const hamburgerMenu = document.querySelector('.hamburger-menu');
         const hamburgerIcon = document.querySelector('.hamburger-icon');
