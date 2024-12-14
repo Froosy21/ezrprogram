@@ -2,6 +2,14 @@
 session_start();
 include('database.php');
 
+require '../vendor/autoload.php';
+require '../PHPMailer-master/src/Exception.php';
+require '../PHPMailer-master/src/PHPMailer.php';
+require '../PHPMailer-master/src/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 function validate($data) {
     return htmlspecialchars(stripslashes(trim($data)));
 }
@@ -11,25 +19,15 @@ if (isset($_POST['register'])) {
     $lname = validate($_POST['lname']);
     $phonenum = validate($_POST['number']);
     $email = validate($_POST['email']);
-    $userpass = $_POST['password'];
+    $userpass = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $confirmpassword = $_POST['confirmpassword'];
 
-    if (empty($fname)) {
-        header("Location: registration.php?error=First name is required");
+    if (empty($fname) || empty($lname) || empty($phonenum) || empty($email) || empty($_POST['password'])) {
+        header("Location: registration.php?error=All fields are required");
         exit();
-    } elseif (empty($lname)) {
-        header("Location: registration.php?error=Last name is required");
-        exit();
-    } elseif (empty($phonenum)) {
-        header("Location: registration.php?error=Phone number is required");
-        exit();
-    } elseif (empty($email)) {
-        header("Location: registration.php?error=Email is required");
-        exit();
-    } elseif (empty($userpass)) {
-        header("Location: registration.php?error=Password is required");
-        exit();
-    } elseif ($userpass != $confirmpassword) {
+    }
+
+    if ($_POST['password'] != $confirmpassword) {
         header("Location: registration.php?error=Passwords do not match");
         exit();
     }
@@ -40,22 +38,46 @@ if (isset($_POST['register'])) {
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        $stmt = $conn->prepare("INSERT INTO users (fname, lname, phonenum, email, userpass) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $fname, $lname, $phonenum, $email, $userpass);
+        $verificationToken = bin2hex(random_bytes(16));
+        
+        $hashedPassword = password_hash($userpass, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users (fname, lname, phonenum, email, userpass, verifytoken) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $fname, $lname, $phonenum, $email, $userpass, $verificationToken);
         $stmt->execute();
 
-        $_SESSION['email'] = $email;
-        $_SESSION['id'] = $conn->insert_id;
-        $_SESSION['fname'] = $fname;
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'gerbyombina21@gmail.com';
+            $mail->Password = 'hrcc cicg sgek ytwg';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
 
-        header("Location: registration.php?success=Registered successfully!");
-        exit();
+            $mail->setFrom('gerbyombina21@gmail.com', 'EZ Reborn Gears');
+            $mail->addAddress($email, $fname . ' ' . $lname);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Email Verification';
+            $verificationLink = "http://localhost/EzRebornProgram/LogReg/verify.php?token=" . $verificationToken;
+            $mail->Body = "Click the link to verify your email: <a href='$verificationLink'>$verificationLink</a>";
+            
+            $mail->SMTPDebug = 2;
+            $mail->send();
+            header("Location: registration.php?success=Check your email to verify your account");
+            exit();
+        } catch (Exception $e) {
+            header("Location: registration.php?error=Mailer Error: {$mail->ErrorInfo}");
+            exit();
+        }
     } else {
         header("Location: registration.php?error=Email already exists");
         exit();
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,3 +110,4 @@ if (isset($_POST['register'])) {
     </form>
 </body>
 </html>
+```

@@ -25,7 +25,9 @@ if (isset($_POST['login'])) {
 
     if ($result->num_rows === 1) {
         $row = $result->fetch_assoc();
-        if ($row['userpass'] === $userpass) { 
+        
+        // Use password_verify to check the hashed password
+        if (password_verify($userpass, $row['userpass'])) {
             $_SESSION['email'] = $email;
             $_SESSION['id'] = $row['id'];
             $_SESSION['fname'] = $row['fname']; 

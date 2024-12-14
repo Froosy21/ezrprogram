@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax'])) {
                 // Store order details with billing address and phone number
                 foreach ($cart as $product_id => $quantity) {
                     $stmt = $conn->prepare("INSERT INTO orders (email, product_name, quantity, price, address, phonenum, order_date) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                    $stmt->bind_param("ssiiss", $email, $products[$product_id]['name'], $quantity, $products[$product_id]['price'], $billing_address, $phone_number);
+                    $stmt->bind_param("ssiiss", $email, $products[$product_id]['name'], $quantity, $amount, $billing_address, $phone_number);
                     $stmt->execute();
                     $stmt->close();
                 }
